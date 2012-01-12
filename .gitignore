@@ -11,6 +11,7 @@
 
 bin/
 obj/
+TestResults/
 *.cachefile
 
 # Word temp files #
