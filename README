@@ -1,0 +1,18 @@
+==========
+ExToString
+==========
+
+C# Extension method to output the full detail of an
+exception.
+
+===
+
+All code in this project is covered under the terms 
+of the MIT License a copy of which is available in 
+the same directory under the file name LICENSE
+
+===
+
+This program is Copyright 2012 Simon P Stevens
+
+===
