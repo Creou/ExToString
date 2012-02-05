@@ -24,12 +24,32 @@ namespace ExToString
 
                 var indent = innerDepthCount > 0 ? new String(' ', 4 * innerDepthCount) : String.Empty;
 
+                // Type and message
                 StringBuilder exceptionMessage = new StringBuilder();
                 exceptionMessage.Append(indent);
-                exceptionMessage.Append(exception.GetType().FullName);
-                exceptionMessage.Append(": ");
+                exceptionMessage.AppendLine(exception.GetType().FullName);
+                exceptionMessage.AppendLine();
+                exceptionMessage.Append(indent);
+                exceptionMessage.Append(" Message: ");
                 exceptionMessage.Append(exception.Message);
 
+                // Reflected properties
+                var exType = exception.GetType();
+                var properties = exType.GetProperties();
+                //List<String> handled = new List<string>(new String[] { "Data", "HelpLink", "HResult", "InnerException", "Message", "Source", "StackTrace", "TargetSite" });
+                List<String> handled = new List<string>(new String[] { "Data", "InnerException", "Message", "StackTrace" });
+                var propertiesToDisplay = properties.Where(prop => !handled.Contains(prop.Name));
+                if (propertiesToDisplay.Count() > 0)
+                {
+                    exceptionMessage.AppendLine();
+                    foreach (var property in propertiesToDisplay)
+                    {
+                        var value = property.GetValue(exception, null);
+                        exceptionMessage.AppendFormat("\n{2} {0}: {1}", property.Name, value, indent);
+                    }
+                }
+
+                // Data
                 String exDataString = null;
                 if (exception.Data != null && exception.Data.Count > 0)
                 {
@@ -42,25 +62,27 @@ namespace ExToString
                     }
                     exDataString = exData.ToString();
 
-                    exceptionMessage.AppendFormat("\n\n{1}Data: {0}", exDataString, indent);
+                    exceptionMessage.AppendFormat("\n\n{1} Data: {0}", exDataString, indent);
                 }
 
+                // Stack trace
                 var tabbedStackTrace = exception.StackTrace != null
                            ? ((innerDepthCount > 0)
-                                ? exception.StackTrace.Replace(Environment.NewLine, Environment.NewLine + indent)
+                                ? indent + exception.StackTrace.Replace(Environment.NewLine, Environment.NewLine + indent)
                                 : exception.StackTrace)
                            : null;
 
                 if (!String.IsNullOrEmpty(tabbedStackTrace))
                 {
-                    exceptionMessage.AppendFormat("\n\n{1}[Stack:\n{1}{0}\n{1}]", tabbedStackTrace, indent);
+                    exceptionMessage.AppendFormat("\n\n{1} Stack:\n{1} [\n{0}\n{1} ]", tabbedStackTrace, indent);
                 }
 
+                // Inner exception
                 if (exception.InnerException != null)
                 {
                     String innerExceptionString = exception.InnerException.ToFullExceptionString(innerDepthCount + 1);
 
-                    exceptionMessage.AppendFormat("\n\n{2}(Inner-{0}:\n{1}\n{2})", innerDepthCount, innerExceptionString, indent);
+                    exceptionMessage.AppendFormat("\n\n{2} Inner-{0}:\n{2} (\n{1}\n{2} )", innerDepthCount, innerExceptionString, indent);
                 }
 
                 return exceptionMessage.ToString();
@@ -68,7 +90,7 @@ namespace ExToString
             // This method will be used in exception handling and must not error.
             catch (Exception ex)
             {
-                return "UNABLE TO GET FULL EXCEPTION TRACE.";
+                return "UNABLE TO GET FULL EXCEPTION OUTPUT.\n\nDefault output:\n" + ex.ToString();
             }
         }
     }
